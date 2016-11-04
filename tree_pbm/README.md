@@ -8,3 +8,5 @@ a certain maximum height. At the same time the tree may get a disease, in which 
 its value. When the company decides to cut a tree, it gains an amount of money which is proportional to
 the height of the tree. Whenever a tree is cut (or it is dead), a new tree has to be planted with a fixed cost.
 Knowing that the one unit of money looses value over time, find the optimal cutting strategy.
+
+See link for more details: http://chercheurs.lille.inria.fr/ekaufman/TP1_2016.pdf
