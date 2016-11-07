@@ -4,7 +4,7 @@ import copy
 import numpy as np
 
 
-
+### 1 - Formalisation ###
 class Tree:
     'Common base class for all trees'
 
@@ -121,13 +121,15 @@ class tree_MDP:
         return new_state
 
 
+# Cheking the MDP tree probabilities
 mdp = tree_MDP()
 
-#def check_mdp_tree(mdp):
 matrice = mdp.proba_matrix("no cut")
 for i in range(len(matrice)):
     print(sum(matrice[i]))
 
+
+### 2 - Policy Evaluation ###
 
 def monte_carlo_eval(mdp, n=1000, init_state=1):
     tree = mdp.tree
@@ -154,8 +156,15 @@ def monte_carlo_eval(mdp, n=1000, init_state=1):
     return float(all_traj_return), float(number_traj)
 
 
+# Monte Carlo
 def mc_final_eval(mdp, number_run, init_state):
+    """
 
+    :param mdp: Class
+    :param number_run: Number of iteration
+    :param init_state: integer (state)
+    :return: integer and array with the set of values given all the MC trajectories
+    """
     mc_evals = []
     n_trajectories = []
     eval = 0
@@ -188,21 +197,13 @@ def mc_value_func(mdp, number_run):
     return value_func_estimation
 
 
-def plot_mc_sim(mdp, number_run, init_state):
-
-    n_trajectories, mc_evals = mc_final_eval(mdp, number_run, init_state)
-    xlabel = "number of trajectories"
-    ylabel = "Estimated Value function(state = 1, naive_policy) "
-    x = n_trajectories
-    y = mc_evals
-    plt.plot(x, y, '-')
-    plt.ylabel(ylabel)
-    plt.xlabel(xlabel)
-    plt.show()
-
-
+# Dynamic Programming
 def dynamic_value_func(mdp):
+    """
 
+    :param mdp: Class
+    :return: Vector of the Values for each state
+    """
     naive_matrix, naive_reward = mdp.naive_proba_rewards()
     naive_matrix = np.array(naive_matrix)
     n = len(naive_reward)
@@ -212,14 +213,37 @@ def dynamic_value_func(mdp):
     return np.linalg.inv((id - gamma * naive_matrix)).dot(np.transpose(naive_reward))
 
 
-# 3)
+# Plots
+def plot_mc_sim(mdp, number_run, init_state):
 
-# Value Iteration using V value
+    n_trajectories, mc_evals = mc_final_eval(mdp, number_run, init_state)
+    n = len(mc_evals)
+    dp_value = dynamic_value_func(mdp)
+    dp_value = dp_value[0]
+    dp_value = np.array([dp_value] * n)
+    mc_evals = np.array(mc_evals)
 
+    xlabel = "number of trajectories"
+    ylabel = "Estimated Value function(state = 5, naive_policy) - Exact Value function(Dynamic Programming)"
+    x = n_trajectories
+    y = mc_evals - dp_value
+    plt.plot(x, y, '-')
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    plt.show()
+
+
+### 3 - Optimal Policy ###
+
+# Value iteration
 def Value_Iteration(mdp, epsilon):
+    """
 
+    :param mdp: Class
+    :param epsilon: L2 norm difference between the successiv vectors threshold
+    :return: Value vector, Optimal Policy, All the sets of Values of the VI
+    """
     Values_V = []
-    # Initializing V
     max_height = mdp.tree.max_height
     gamma = mdp.gamma
     V = np.zeros(max_height)
@@ -229,7 +253,6 @@ def Value_Iteration(mdp, epsilon):
     number_of_iteration = 0
     while np.linalg.norm(V - V_prec) > epsilon:
 
-        # Value iteration step
         V_prec = copy.copy(V)
         Values_V.append(V_prec)
 
@@ -241,7 +264,6 @@ def Value_Iteration(mdp, epsilon):
         number_of_iteration += 1
         print("Computing VI for iteration number {}".format(number_of_iteration))
 
-        # Computing the greedy policy
     for state in all_states:
         table = [mdp.tree_sim(state, action, mdp.proba_matrix(action))[1] +
                  gamma * (np.array(mdp.proba_matrix(action)).dot(V))[state - 1]
@@ -274,11 +296,12 @@ def get_proba_reward(mdp, Policy):
 
     return matrix, reward_vector
 
-# Policy iteration using V value
+
+# Policy iteration
 def Policy_Iteration(mdp):
-    # Storing the updates of V after each iteration for the plots
+
     Values_V = []
-    # Initializing V
+
     max_height = mdp.tree.max_height
     gamma = mdp.gamma
     V = np.zeros(max_height)
@@ -314,25 +337,24 @@ def Policy_Iteration(mdp):
         number_of_iteration += 1
         print("Computing VI for iteration number {}".format(number_of_iteration))
 
+    policy = ["cut" if x == 0 else "no_cut" for x in policy]
     return V, policy, Values_V
 
 
-# 4)
-
-# Plotting the convergence curve fo Value Iteration and Policy Iteration
 def study_convergence(mdp, epsilon=0.01):
 
-    Value_list_VI = [np.linalg.norm(Value_Iteration(mdp, epsilon)[0] - V) for V in Value_Iteration(mdp, epsilon)[2]]
-    Value_list_PI = [np.linalg.norm(Policy_Iteration(mdp)[0] - V) for V in Policy_Iteration(mdp)[2]]
+    vi_values = Value_Iteration(mdp, epsilon)
+    pi_valies = Policy_Iteration(mdp)
+    Value_list_VI = [np.linalg.norm(vi_values[0] - V) for V in vi_values[2]]
+    Value_list_PI = [np.linalg.norm(pi_valies[0] - V) for V in pi_valies [2]]
 
     plt.figure()
 
     plt.title('Convergence of Value Iteration and Policy iteration')
     plt.xlabel("Number of Iteration")
-    plt.ylabel('Convergence')
-
-    plot_VI = plt.plot(range(len(Value_list_VI)), Value_list_VI, 'b-', label='Value Iteration')
-    plot_PI = plt.plot(range(len(Value_list_PI)), Value_list_PI, 'g-', label='Policy Iteration')
+    plt.ylabel('Norm of Vn - V')
+    plt.plot(range(len(Value_list_VI)), Value_list_VI, '-', label='Value Iteration')
+    plt.plot(range(len(Value_list_PI)), Value_list_PI, 'r-', label='Policy Iteration')
 
     plt.legend()
 
