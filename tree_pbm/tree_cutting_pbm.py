@@ -184,7 +184,12 @@ def mc_final_eval(mdp, number_run, init_state):
 
 
 def mc_value_func(mdp, number_run):
+    """
 
+    :param mdp:
+    :param number_run:
+    :return: return the value vector of the value function for all the states
+    """
     n_states = mdp.tree.max_height
     value_func_estimation = {}
     for init_state in range(1, n_states + 1):
@@ -215,11 +220,18 @@ def dynamic_value_func(mdp):
 
 # Plots
 def plot_mc_sim(mdp, number_run, init_state):
+    """
+
+    :param mdp:
+    :param number_run:
+    :param init_state:
+    :return: shows the plot of the convergence of the monte carlo method
+    """
 
     n_trajectories, mc_evals = mc_final_eval(mdp, number_run, init_state)
     n = len(mc_evals)
     dp_value = dynamic_value_func(mdp)
-    dp_value = dp_value[0]
+    dp_value = dp_value[init_state]
     dp_value = np.array([dp_value] * n)
     mc_evals = np.array(mc_evals)
 
@@ -249,7 +261,7 @@ def Value_Iteration(mdp, epsilon):
     V = np.zeros(max_height)
     policy = np.zeros(max_height)
     all_states = range(1, mdp.tree.max_height + 1)
-    V_prec= V + 1
+    V_prec = V + 1
     number_of_iteration = 0
     while np.linalg.norm(V - V_prec) > epsilon:
 
@@ -299,6 +311,11 @@ def get_proba_reward(mdp, Policy):
 
 # Policy iteration
 def Policy_Iteration(mdp):
+    """
+
+    :param mdp: Class of the MDP simulation
+    :return:
+    """
 
     Values_V = []
 
@@ -342,7 +359,12 @@ def Policy_Iteration(mdp):
 
 
 def study_convergence(mdp, epsilon=0.01):
+    """
 
+    :param mdp: Class of the MDP simulation
+    :param epsilon:
+    :return:
+    """
     vi_values = Value_Iteration(mdp, epsilon)
     pi_valies = Policy_Iteration(mdp)
     Value_list_VI = [np.linalg.norm(vi_values[0] - V) for V in vi_values[2]]
