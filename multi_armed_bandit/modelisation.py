@@ -1,8 +1,14 @@
 from random import random
+from math import log
 
 import numpy as np
 
 from multi_armed_bandit.formalization import ArmBernoulli, ArmBeta, ArmExp, ArmFinite
+
+
+def kl(x, y):
+
+    return x * log(x / y) + (1 - x) * log((1 - x) / (1 - y))
 
 
 class Game:
@@ -129,3 +135,11 @@ class Game:
         expected_regret = t_vectore - np.mean(rewards_matrix, axis=0)
 
         return expected_regret
+
+    def complexity(self):
+        means = np.array(self.means)
+        p = max(self.means)
+        _kl_ = np.array([kl(mean, p) for mean in self.means])
+        _means = (means - p) / _kl_
+
+        return np.sum(_means)
