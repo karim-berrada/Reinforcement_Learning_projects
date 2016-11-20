@@ -16,7 +16,10 @@ class ArmBernoulli:
 
     def sample(self):
         reward = random() < self.p
-        return reward
+        if reward:
+            return 1.
+        else:
+            return 0.
 
 
 class ArmBeta:

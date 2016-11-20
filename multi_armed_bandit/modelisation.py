@@ -10,20 +10,10 @@ means = [random() for i in range(K)]
 MAB = [ArmBernoulli(means[i]) for i in range(K)]
 
 
-def reward(arm, state):
-
-    if state:
-        return 1. / arm.mean
-
-    else:
-        return -1 / (1. - arm.mean)
-
-
 def initialize(MAB):
 
-    Sample = [arm.sample() for arm in MAB]
+    rewards = [arm.sample() for arm in MAB]
     number_draws = np.array([1] * K)
-    rewards = np.array([reward(MAB[i], Sample[i]) for i in range(K)])
 
     return number_draws, rewards
 
@@ -52,14 +42,51 @@ def UCB1(T, MAB):
         print("Next Arm to draw: {}".format(next_action + 1))
 
         next_arm = MAB[next_action]
-        state = next_arm.sample()
-        print("State of the next arm drawn: {}".format(state))
+        r = next_arm.sample()
+        print("Reward of the next arm drawn: {}".format(r))
 
         # Updating the N(t) and S(t)
         number_draws[next_action] += 1
         print("N vector updated: {}".format(number_draws))
 
-        r = reward(next_arm, state)
+        rewards[next_action] += r
+        print("S vector updated: {}".format(rewards))
+
+        # Lists of rewards and actions(arms drawn)
+        draw.append(next_action)
+        rew.append(r)
+
+    return rew, draw
+
+
+def TS(T, MAB):
+    """
+    Thomson Sampling algorithm
+    :param T:
+    :param MAB:
+    :return:
+    """
+
+    number_draws, rewards = [0] * K, [0] * K
+    rew = []
+    draw = []
+
+    for t in range(T):
+
+        beta_seq = [ArmBeta(rewards[i] + 1, number_draws[i] - rewards[i] + 1).sample() for i in range(K)]
+        print("betabinomial sequence  function from which we get the argmax: {}".format(beta_seq))
+        # Get the argmax from the betabinomial sequence function
+        next_action = np.argmax(beta_seq)
+        print("Next Arm to draw: {}".format(next_action + 1))
+
+        next_arm = MAB[next_action]
+        r = next_arm.sample()
+        print("Reward of the next arm drawn: {}".format(r))
+
+        # Updating the N(t) and S(t)
+        number_draws[next_action] += 1
+        print("N vector updated: {}".format(number_draws))
+
         rewards[next_action] += r
         print("S vector updated: {}".format(rewards))
 
