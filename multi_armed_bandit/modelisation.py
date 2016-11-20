@@ -22,7 +22,7 @@ class Game:
 
         return number_draws, rewards
 
-    def UCB1(self, T):
+    def UCB1(self, T, naive=False):
 
         """
         The UCB1 algorithm starts with an initialization phase that draws each arm once, and then for each t more than K,
@@ -38,7 +38,10 @@ class Game:
 
         for t in range(T):
 
-            opt_func = rewards / number_draws + np.sqrt(np.log(t + 1) / (2. * number_draws))
+            if naive:
+                opt_func = rewards / number_draws
+            else:
+                opt_func = rewards / number_draws + np.sqrt(np.log(t + 1) / (2. * number_draws))
             print("optimization function from which we get the argmax: {}".format(opt_func))
 
             # Get the argmax from the optimization function
@@ -111,9 +114,14 @@ class Game:
                 cumulative_rew = np.cumsum(rew)
                 rewards.append(cumulative_rew.tolist())
 
-        if mode == 'TS':
+        elif mode == 'TS':
             for i in range(n):
                 rew, draw = self.TS(T)
+                cumulative_rew = np.cumsum(rew)
+                rewards.append(cumulative_rew.tolist())
+        else:
+            for i in range(n):
+                rew, draw = self.UCB1(T, naive=True)
                 cumulative_rew = np.cumsum(rew)
                 rewards.append(cumulative_rew.tolist())
 
