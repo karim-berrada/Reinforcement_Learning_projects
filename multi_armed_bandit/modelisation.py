@@ -3,7 +3,7 @@ from math import log
 
 import numpy as np
 
-from multi_armed_bandit.formalization import ArmBernoulli, ArmBeta, ArmExp, ArmFinite
+from multi_armed_bandit.formalization import ArmBernoulli, ArmBeta, ArmGamma, ArmExp
 
 
 def kl(x, y):
@@ -13,13 +13,23 @@ def kl(x, y):
 
 class Game:
 
-    def __init__(self, K):
+    def __init__(self, K, perso=False, perso_means=[], expo=False):
         """
         :param K: number of arms (integer)
         """
         self.K = K
-        self.means = [random() for i in range(K)]
-        self.MAB = [ArmBernoulli(self.means[i]) for i in range(K)]
+        self.expo = expo
+        if perso:
+            self.means = perso_means
+        else:
+            self.means = [random() for i in range(K)]
+
+        if expo:
+            means = [ArmGamma(0.5, 1).sample() for i in range(K)]
+            self.means = means
+            self.MAB = [ArmExp(means[i]) for i in range(K)]
+        else:
+            self.MAB = [ArmBernoulli(self.means[i]) for i in range(K)]
 
     def initialize(self):
 
@@ -43,7 +53,7 @@ class Game:
         draw = []
 
         for t in range(T):
-
+            print("len = {}".format(t))
             if naive:
                 opt_func = rewards / number_draws
             else:
@@ -85,9 +95,14 @@ class Game:
 
         for t in range(T):
 
-            beta_seq = [ArmBeta(rewards[i] + 1, number_draws[i] - rewards[i] + 1).sample() for i in range(self.K)]
+            if self.expo:
+                beta_seq = [ArmGamma(number_draws[i] + 0.5, rewards[i] + 1).sample() for i in range(self.K)]
+
+            else:
+                beta_seq = [ArmBeta(rewards[i] + 1, number_draws[i] - rewards[i] + 1).sample() for i in range(self.K)]
+
             print("betabinomial sequence  function from which we get the argmax: {}".format(beta_seq))
-            # Get the argmax from the betabinomial sequence function
+            # Get the argmax from the sequence function
             next_action = np.argmax(beta_seq)
             print("Next Arm to draw: {}".format(next_action + 1))
 
@@ -116,17 +131,20 @@ class Game:
 
         if mode == 'UCB1':
             for i in range(n):
+                print("iteration number {}".format(i))
                 rew, draw = self.UCB1(T)
                 cumulative_rew = np.cumsum(rew)
                 rewards.append(cumulative_rew.tolist())
 
         elif mode == 'TS':
             for i in range(n):
+                print("iteration number {}".format(i))
                 rew, draw = self.TS(T)
                 cumulative_rew = np.cumsum(rew)
                 rewards.append(cumulative_rew.tolist())
         else:
             for i in range(n):
+                print("iteration number {}".format(i))
                 rew, draw = self.UCB1(T, naive=True)
                 cumulative_rew = np.cumsum(rew)
                 rewards.append(cumulative_rew.tolist())
@@ -139,7 +157,13 @@ class Game:
     def complexity(self):
         means = np.array(self.means)
         p = max(self.means)
-        _kl_ = np.array([kl(mean, p) for mean in self.means])
+        means = np.setdiff1d(means, p)
+        _kl_ = np.array([kl(mean, p) for mean in np.setdiff1d(self.means, p)])
+
         _means = (means - p) / _kl_
 
         return np.sum(_means)
+
+    def oracle(self, T):
+
+        return [self.complexity() * log(i + 1) for i in range(T)]

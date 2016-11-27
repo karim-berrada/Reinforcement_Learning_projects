@@ -40,6 +40,23 @@ class ArmBeta:
         return reward
 
 
+class ArmGamma:
+
+    def __init__(self, alpha, beta):
+        """
+        a: first beta parameter
+        b: second beta parameter
+        """
+        self.alpha = alpha
+        self.beta = beta
+        self.mean = alpha * beta
+        self.var = beta * beta * alpha
+
+    def sample(self):
+
+        return np.random.gamma(self.alpha, self.beta)
+
+
 class ArmExp():
     """arm with trucated exponential distribution"""
 
@@ -48,11 +65,11 @@ class ArmExp():
         lambd: parameter of the exponential distribution
         """
         self.lambd = lambd
-        self.mean = (1 / lambd) * (1 - exp(-lambd))
-        self.var = 1  # compute it yourself!
+        self.mean = (1. / lambd) * (1. - exp(-lambd))
+        self.var = 1.  # compute it yourself!
 
     def sample(self):
-        reward = min(-1 / self.lambd * log(random()), 1)
+        reward = min(-1. / self.lambd * log(random()), 1.)
         return reward
 
 
